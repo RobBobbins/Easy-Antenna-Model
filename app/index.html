@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Easy Antenna Model</title>
+</head>
+<body>
+<header>
+  <h1>Easy Antenna Model</h1>
+  <span class="spacer"></span>
+  <div class="seg" id="units">
+    <button data-u="ft" class="on">ft</button>
+    <button data-u="m">m</button>
+  </div>
+  <div class="seg" id="theme">
+    <button data-t="light">Light</button>
+    <button data-t="dark">Dark</button>
+  </div>
+</header>
+
+<main>
+  <section class="view" id="view">
+    <div id="three"></div>
+    <canvas id="cube" title="Click a face, edge or corner to look from that side"></canvas>
+    <div class="toolbar">
+      <div class="seg" id="views">
+        <button data-view="front">Front</button>
+        <button data-view="side">Side</button>
+        <button data-view="top">Top</button>
+        <button data-view="iso">3D</button>
+      </div>
+      <div class="seg"><button id="orbitBtn" class="on">Orbit: On</button></div>
+      <select id="patStyle" class="patstyle" aria-label="Pattern style">
+        <option value="default">Pattern: Default</option><option value="solid">Pattern: Solid</option><option value="wireframe">Pattern: Wireframe</option><option value="slices">Pattern: Slices</option><option value="dots">Pattern: Dots</option><option value="mirror">Pattern: Mirror</option>
+      </select>
+      <div class="bgpick">
+        <button id="bgBtn" class="bgbtn" aria-haspopup="true" aria-expanded="false"><span id="bgSwatch" class="swatch"></span>Background</button>
+        <div id="bgMenu" class="bgmenu" hidden>
+          <button data-bg="theme"><span class="swatch theme"></span>Theme</button>
+          <button data-bg="#000000"><span class="swatch" style="background:#000000"></span>Black</button>
+          <button data-bg="night"><span class="swatch night"></span>Night sky</button>
+          <button data-bg="#2b2f36"><span class="swatch" style="background:#2b2f36"></span>Charcoal</button>
+          <button data-bg="#13234a"><span class="swatch" style="background:#13234a"></span>Navy</button>
+          <button data-bg="#87b8e6"><span class="swatch" style="background:#87b8e6"></span>Sky blue</button>
+          <button data-bg="#8a8f98"><span class="swatch" style="background:#8a8f98"></span>Grey</button>
+          <button data-bg="#ffffff"><span class="swatch" style="background:#ffffff"></span>White</button>
+          <label class="custom"><input type="color" id="bgCustom" value="#336699">Custom…</label>
+          <label class="custom lines"><input type="checkbox" id="constLines">Constellation lines</label>
+        </div>
+      </div>
+    </div>
+    <div class="viewwarn" id="viewWarn" hidden></div>
+    <div class="nogl" id="nogl" hidden>The 3D view could not start in this browser.</div>
+  </section>
+  <div class="legend">
+    <span id="legendWhat"></span>
+    <div class="scale" id="legendScale"><span>weak</span><i></i><span>strong</span></div>
+  </div>
+
+  <aside class="results">
+    <div class="rgroup">
+    <div id="busy" class="busy" hidden>Calculating…</div>
+    <div class="card chartcard">
+      <svg class="chart" id="chart"></svg>
+    </div>
+
+    <div class="card sumcard">
+      <div class="big">
+        <span class="num" id="rSwrRadio">–</span>
+        <span class="verdict" id="rVerdict"></span>
+        <span class="sub">SWR at radio</span>
+      </div>
+      <div class="row"><span>SWR at antenna</span><span id="rSwrAnt">–</span></div>
+      <div class="row"><span>Gain</span><span id="rGain">–</span></div>
+      <div class="row"><span>Best angle</span><span id="rAngle">–</span></div>
+      <div class="row off" id="rowFB"><span>Front-to-back</span><span id="rFB">–</span></div>
+      <div class="row"><span>Impedance</span><span id="rZ">–</span></div>
+      <div class="row"><span>Coax loss</span><span id="rLoss">–</span></div>
+      <div class="row"><span>Power reaching antenna</span><span id="rPower">–</span></div>
+      <div class="row"><span>100 W in →</span><span id="rWatts">–</span></div>
+    </div>
+    </div>
+  </aside>
+</main>
+
+<section class="drawer" id="drawer">
+<button class="handle" id="drawerHandle" aria-expanded="true">Options <span id="drawerArrow">▼</span></button>
+<div class="bar">
+  <div class="opt w-ant">
+    <select id="antenna" aria-label="Antenna"><option value="dipole">Dipole</option><option value="invv">Inverted V</option><option value="efhw">EFHW</option><option value="gp">Ground plane vertical</option><option value="gpa">Ground plane array (3 el)</option></select>
+    <small>Antenna</small>
+  </div>
+
+  <div class="opt">
+    <div class="chips" id="bands">
+      <button data-band="80">80</button><button data-band="40">40</button><button data-band="20">20</button><button data-band="15">15</button><button data-band="10" class="on">10</button><button data-band="more" disabled title="More bands come in a later step">more…</button>
+    </div>
+    <small>Band (m)</small>
+  </div>
+
+  <div class="opt w-freq">
+    <div class="nbox" id="freqBox" data-kind="freq" data-val="28.4" data-min="0.1" data-max="2000"><input inputmode="decimal" aria-label="Frequency"><span class="u"></span></div>
+    <small data-label="Frequency">Frequency</small>
+  </div>
+
+  <div class="opt w-len" data-for="dipole invv efhw">
+    <div class="nbox" id="lenBox" data-kind="len" data-val="39.01438" data-min="0.01" data-max="1000"><input inputmode="decimal" aria-label="Total length"><span class="u"></span></div>
+    <small data-label="Total length">Total length</small>
+  </div>
+
+  <div class="opt w-len" data-for="gp gpa">
+    <div class="nbox" id="gpVertBox" data-kind="len" data-val="2.49936" data-min="0.05" data-max="300"><input inputmode="decimal" aria-label="Vertical length"><span class="u"></span></div>
+    <small data-label="Vertical length">Vertical length</small>
+  </div>
+
+  <div class="opt w-len" data-for="gp gpa">
+    <div class="nbox" id="gpRadBox" data-kind="len" data-val="2.56032" data-min="0.05" data-max="300"><input inputmode="decimal" aria-label="Radial length"><span class="u"></span></div>
+    <small data-label="Radial length">Radial length</small>
+  </div>
+
+  <div class="opt w-count" data-for="gp gpa">
+    <div class="nbox" id="gpRadNBox" data-kind="count" data-val="4" data-min="2" data-max="8"><input inputmode="decimal" aria-label="Number of radials"><span class="u"></span></div>
+    <small data-label="Number of radials">Number of radials</small>
+  </div>
+
+  <div class="opt w-deg" data-for="gp gpa">
+    <div class="nbox" id="gpDroopBox" data-kind="deg" data-val="0" data-min="0" data-max="45"><input inputmode="decimal" aria-label="Radial droop"><span class="u"></span></div>
+    <small data-label="Radial droop">Radial droop</small>
+  </div>
+
+  <div class="opt w-len" data-for="gpa">
+    <div class="nbox" id="arrRefLenBox" data-kind="len" data-val="2.62128" data-min="0.05" data-max="300"><input inputmode="decimal" aria-label="Reflector length"><span class="u"></span></div>
+    <small data-label="Reflector length">Reflector length</small>
+  </div>
+
+  <div class="opt w-len" data-for="gpa">
+    <div class="nbox" id="arrRefSpBox" data-kind="len" data-val="2.10312" data-min="0.05" data-max="300"><input inputmode="decimal" aria-label="Reflector spacing"><span class="u"></span></div>
+    <small data-label="Reflector spacing">Reflector spacing</small>
+  </div>
+
+  <div class="opt w-len" data-for="gpa">
+    <div class="nbox" id="arrDirLenBox" data-kind="len" data-val="2.37744" data-min="0.05" data-max="300"><input inputmode="decimal" aria-label="Director length"><span class="u"></span></div>
+    <small data-label="Director length">Director length</small>
+  </div>
+
+  <div class="opt w-len" data-for="gpa">
+    <div class="nbox" id="arrDirSpBox" data-kind="len" data-val="2.10312" data-min="0.05" data-max="300"><input inputmode="decimal" aria-label="Director spacing"><span class="u"></span></div>
+    <small data-label="Director spacing">Director spacing</small>
+  </div>
+
+  <div class="opt w-wire">
+    <div class="nbox" id="wireBox" data-kind="wire" data-val="1.628" data-min="0.08" data-max="50"><input inputmode="decimal" aria-label="Wire size"><span class="u"></span>
+      <div class="seg" id="wiremode"><button data-w="awg" class="on">AWG</button><button data-w="dia">Diameter</button></div>
+    </div>
+    <small data-label="Wire size">Wire size</small>
+  </div>
+
+  <div class="opt w-len" data-for="dipole invv efhw">
+    <div class="nbox" data-kind="len" data-val="10" data-min="0.01" data-max="300" id="heightBox"><input inputmode="decimal" aria-label="Height"><span class="u"></span></div>
+    <small data-label="Height" id="heightLabel">Height</small>
+  </div>
+
+  <div class="opt w-len" data-for="gp gpa">
+    <div class="nbox" id="gpBaseBox" data-kind="len" data-val="0.0508" data-min="0.025" data-max="300"><input inputmode="decimal" aria-label="Base height"><span class="u"></span></div>
+    <small data-label="Base height">Base height</small>
+  </div>
+
+  <div class="opt w-len" data-for="invv">
+    <div class="nbox" id="invEndBox" data-kind="len" data-val="3.048" data-min="0.1" data-max="300"><input inputmode="decimal" aria-label="End height"><span class="u"></span></div>
+    <small data-label="End height">End height</small>
+  </div>
+
+  <div class="opt w-len" data-for="efhw">
+    <div class="nbox" id="efhwFeedBox" data-kind="len" data-val="3.048" data-min="0.1" data-max="300"><input inputmode="decimal" aria-label="Feed end height"><span class="u"></span></div>
+    <small data-label="Feed end height">Feed end height</small>
+  </div>
+
+  <div class="opt w-ground">
+    <select id="ground" aria-label="Ground type"><option value="average">Average</option><option value="poor">Poor (sand, rock)</option><option value="good">Good (farmland)</option><option value="salt">Salt water</option><option value="free">Free space</option></select>
+    <small>Ground type</small>
+  </div>
+
+  <div class="opt">
+    <div class="chips" id="balun">
+      <button data-ratio="1" data-none="1">None</button><button data-ratio="1" class="on">1:1</button><button data-ratio="4">4:1</button><button data-ratio="9">9:1</button><button data-ratio="49">49:1</button>
+    </div>
+    <small>Balun</small>
+  </div>
+
+  <div class="opt w-coax">
+    <select id="coax" aria-label="Coax type"><option value="rg8x">RG-8X</option><option value="rg58">RG-58</option><option value="rg213">RG-213</option><option value="lmr400">LMR-400</option><option value="ladder450">450 Ω ladder line</option></select>
+    <small>Coax</small>
+  </div>
+
+  <div class="opt w-len">
+    <div class="nbox" id="coaxLenBox" data-kind="len" data-val="22.86" data-min="0.01" data-max="1000"><input inputmode="decimal" aria-label="Coax length"><span class="u"></span></div>
+    <small data-label="Coax length">Coax length</small>
+  </div>
+
+  <div class="opt w-grid">
+    <div class="tbox" id="gridBox"><input id="gridSq" maxlength="6" spellcheck="false" autocomplete="off" placeholder="EN91" aria-label="Grid square"></div>
+    <small data-label="Grid square">Grid square</small>
+  </div>
+</div>
+</section>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
