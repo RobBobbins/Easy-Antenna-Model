@@ -56,6 +56,52 @@ header {
 header h1 { font-size: 17px; margin: 0; font-weight: 700; letter-spacing: .2px; }
 header .tag { font-size: 11px; color: var(--muted); border: 1px dashed var(--border); padding: 2px 6px; border-radius: 4px; }
 header .spacer { flex: 1; }
+
+/* ---------- About ---------- */
+.infobtn {
+  flex: none; display: grid; place-items: center;
+  width: 22px; height: 22px; margin-left: -6px; padding: 0;
+  border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer;
+}
+.infobtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+.infobtn svg .dot { fill: currentColor; stroke: none; }
+.infobtn:hover, .infobtn:focus-visible { color: var(--accent); }
+.about {
+  width: min(480px, calc(100% - 32px)); max-height: calc(100% - 48px);
+  padding: 0; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--panel); color: var(--text);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+  overflow: hidden;
+}
+.about::backdrop { background: rgba(5, 8, 12, .6); }
+.aboutin {
+  max-height: calc(100vh - 50px); overflow-y: auto; padding: 24px 28px 20px;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.about h2 { margin: 0; font-size: 20px; }
+.about .byline { margin: 2px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.about h3 {
+  margin: 22px 0 10px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+}
+.credits { list-style: none; margin: 0; padding: 0; }
+.credits li { padding: 10px 0; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.5; }
+.credits li:last-child { border-bottom: 1px solid var(--border); }
+.credits .what { display: block; font-size: 11px; color: var(--muted); margin-bottom: 1px; }
+.credits .meta { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 4px; font-size: 12px; }
+.credits .lic { color: var(--muted); }
+.about a { color: var(--accent); text-decoration: none; }
+.about a:hover { text-decoration: underline; }
+.about .licence { margin: 0; font-size: 13px; line-height: 1.5; }
+.about .licence a { display: block; width: fit-content; margin-top: 4px; }
+.aboutfoot { display: flex; justify-content: flex-end; margin-top: 22px; }
+.aboutfoot button {
+  border: 0; border-radius: 8px; padding: 7px 18px;
+  background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer;
+}
+@media (max-width: 420px) {
+  .aboutin { padding: 20px 18px 16px; }
+}
 .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .seg button {
   border: 0; background: transparent; color: var(--muted);
@@ -175,23 +221,33 @@ main {
 
 /* ---------- Bottom bar ---------- */
 :root { --handle-h: 36px; }
+/* the Options button is a fixed bar at the bottom of the screen that never moves;
+   the options slide up from behind it, and back down behind it */
 .drawer {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  isolation: isolate;
+}
+.barwrap {
+  position: absolute; left: 0; right: 0; bottom: 100%; z-index: -1;
   background: var(--panel);
   border-top: 1px solid var(--border);
   box-shadow: 0 -8px 24px rgba(0, 0, 0, .25);
-  transition: transform .25s ease;
+  transition: transform .25s ease, visibility 0s;
 }
-.drawer.closed { transform: translateY(calc(100% - var(--handle-h))); box-shadow: none; }
+.drawer.closed .barwrap {
+  transform: translateY(calc(100% + var(--handle-h)));
+  visibility: hidden; box-shadow: none;
+  transition: transform .25s ease, visibility 0s .25s, box-shadow 0s .25s;
+}
 .handle {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   width: 100%; height: var(--handle-h);
-  border: 0; border-bottom: 1px solid var(--border);
+  border: 0; border-top: 1px solid var(--border);
   background: var(--panel); color: var(--text);
   font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .handle:hover { background: var(--panel-2); }
-.drawer .bar { max-height: 70vh; overflow-y: auto; }
+.drawer .bar { max-height: calc(70vh - var(--handle-h)); overflow-y: auto; }
 .bar {
   background: var(--panel);
   padding: 10px 16px 12px;
@@ -303,8 +359,9 @@ select, .pick {
     column-gap: 48px;
     align-items: stretch;
   }
-  .rgroup .chartcard { display: flex; }
-  .rgroup .chart { height: 100%; aspect-ratio: auto; }
+  /* the graph takes the figures' height and never pushes it taller */
+  .rgroup .chartcard { position: relative; }
+  .rgroup .chart { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; }
   .rgroup .sumcard { width: auto; justify-self: stretch; border-top: 0; padding-top: 0; border-left: 1px solid var(--border); padding-left: 48px; }
 }
 @media (min-width: 761px) {
@@ -327,13 +384,6 @@ select, .pick {
   }
   /* name top-left and colour scale bottom-right, as two small boxes in the 3D view */
   .legend { display: none; }
-  .view #legendWhat, .view #legendScale {
-    position: absolute; margin: 0;
-    background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
-    padding: 4px 8px; color: var(--muted);
-  }
-  .view #legendWhat { top: 10px; left: 12px; font-size: 12px; }
-  .view #legendScale { bottom: 10px; right: 12px; }
   header { padding-left: max(16px, calc((100% - 1000px) / 2)); padding-right: max(16px, calc((100% - 1000px) / 2)); }
 }
 
@@ -366,6 +416,11 @@ select, .pick {
   .legend { flex-wrap: wrap; row-gap: 4px; }
 }
 @media (max-width: 360px) {
+  header { gap: 6px; }
+  header h1 { font-size: 13px; }
+  header .infobtn { margin-left: -4px; }
+  header .seg { flex: none; }
+  header .seg button { padding: 3px 5px; }
   .bar .opt { grid-template-columns: 95px minmax(0, 1fr); }
   .chips { gap: 3px; }
   .chips button { padding: 4px 4px; }
@@ -385,3 +440,100 @@ select, .pick {
 @media (min-width: 761px) {
   .viewwarn { top: 44px; }   /* under the antenna name */
 }
+
+/* ---------- Full screen button and the 3D view in full screen ---------- */
+.fsbtn {
+  display: grid; place-items: center; width: 28px; height: 26px; padding: 0;
+  background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+}
+.fsbtn:hover { color: var(--accent); }
+.fsbtn[hidden] { display: none; }
+.fsbtn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.fsbtn .out, .fsbtn.on .in { display: none; }
+.fsbtn.on .out { display: inline; }
+.view:fullscreen { width: 100%; height: 100%; min-height: 0; }
+.view:fullscreen #cube { display: block; }
+.view #legendWhat, .view #legendScale {
+  position: absolute; margin: 0; z-index: 2;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px 8px; color: var(--muted);
+}
+.view #legendWhat { top: 10px; left: 12px; font-size: 12px; }
+.view #legendScale { bottom: 10px; right: 12px; }
+
+/* ---------- Wide screens: options as a panel on the right, open or folded to a strip ---------- */
+@media (min-width: 1400px) {
+  body {
+    --side-w: 380px;
+    display: grid;
+    grid-template-columns: minmax(16px, 1fr) minmax(0, 1000px) var(--side-w) minmax(16px, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    padding-bottom: 0;
+  }
+  body.side-folded { --side-w: 36px; }
+  header {
+    grid-column: 1 / -1;
+    padding-left: max(16px, calc((100% - 1000px - var(--side-w)) / 2));
+    padding-right: max(16px, calc((100% - 1000px - var(--side-w)) / 2));
+  }
+  main { grid-column: 2; grid-row: 2; width: 100%; margin: 0; }
+  .drawer, .drawer.closed {
+    position: static; grid-column: 3; grid-row: 2;
+    display: flex; flex-direction: column; min-height: 0;
+    transform: none; transition: none; box-shadow: none;
+    border-top: 0; border-left: 1px solid var(--border);
+  }
+  /* here the Options button sits at the top of the panel */
+  .handle, .drawer.closed .handle {
+    order: -1; flex: none; justify-content: space-between; padding: 0 16px;
+    border-top: 0; border-bottom: 1px solid var(--border);
+  }
+  .barwrap, .drawer.closed .barwrap {
+    position: static; z-index: auto; transform: none; visibility: visible;
+    box-shadow: none; border-top: 0; transition: none;
+    flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+  }
+  .drawer .bar {
+    flex: 1 1 auto; max-height: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none; grid-auto-flow: row;
+    justify-content: stretch; align-content: start;
+    padding: 16px;
+  }
+  .bar .opt { grid-template-columns: 110px minmax(0, 1fr); }
+  body.side-folded .drawer .barwrap, body.side-folded .drawer.closed .barwrap { display: none; }
+  body.side-folded .handle {
+    flex: 1 1 auto; width: 100%; height: auto; padding: 12px 0;
+    flex-direction: column-reverse; justify-content: flex-end; align-items: center; gap: 10px;
+    border-bottom: 0;
+  }
+  body.side-folded .handle .hlabel { writing-mode: vertical-rl; }
+}
+
+/* ---------- the results never change size or move while calculating or between antennas ---------- */
+@media all {
+  .results { position: relative; }
+  /* Calculating… sits over the top-right corner instead of taking a line;
+     a shape that can't be built is already explained in the 3D view */
+  .rgroup > .busy {
+    position: absolute; top: 4px; right: 16px; z-index: 2;
+    padding: 1px 8px; font-size: 11px; line-height: 16px;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px;
+  }
+  .rgroup > .busy.warn { display: none; }
+}
+/* room for the array's Front-to-back row is kept in the figures for every antenna, as an
+   empty line built like a row, so the graph and figures never change size between antennas */
+.sumcard:has(#rowFB.off)::after { content: "\00a0"; display: block; padding: 4px 2px; border-bottom: 1px solid transparent; }
+
+/* ---------- small screens: button rows centred, colour bar dropped so the strip stays one line ---------- */
+.tbreak { display: none; }
+@media (max-width: 539px) {
+  /* views and Orbit on the first line; Pattern, Background and full screen on the second */
+  .toolbar { right: 12px; justify-content: center; row-gap: 0; }
+  .tbreak { display: block; flex-basis: 100%; height: 6px; }
+}
+@media (max-width: 429px) {
+  .legend #legendScale { display: none; }
+}
+.legend #legendWhat { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

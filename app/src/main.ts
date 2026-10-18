@@ -26,16 +26,53 @@ document.querySelectorAll<HTMLButtonElement>('#theme button').forEach(b => {
 });
 showTheme();
 
-// ---------- options drawer: open on a first visit, then as the visitor left it ----------
+// ---------- about box: Close button, Esc (built in), or a click outside it ----------
+const about = $('about') as HTMLDialogElement;
+$('aboutBtn').addEventListener('click', () => about.showModal());
+$('aboutClose').addEventListener('click', () => about.close());
+about.addEventListener('click', e => { if (e.target === about) about.close(); });
+
+// ---------- options: a drawer at the bottom, or a panel on the right on wide screens ----------
+// Each is open on a first visit, then as the visitor left it; they're remembered separately.
 const drawer = $('drawer'), handle = $('drawerHandle');
-function setDrawer(open: boolean, save: boolean) {
-  drawer.classList.toggle('closed', !open);
+const side = matchMedia('(min-width: 1400px)');
+let drawerOpen = read('eam-drawer') !== 'closed';
+let sideOpen = read('eam-side') !== 'folded';
+function showOptions() {
+  drawer.classList.toggle('closed', !drawerOpen);
+  document.body.classList.toggle('side-folded', !sideOpen);
+  const open = side.matches ? sideOpen : drawerOpen;
   handle.setAttribute('aria-expanded', open ? 'true' : 'false');
-  $('drawerArrow').textContent = open ? '▼' : '▲';
-  if (save) store('eam-drawer', open ? 'open' : 'closed');
+  $('drawerArrow').textContent = side.matches ? (open ? '▶' : '◀') : (open ? '▼' : '▲');
 }
-setDrawer(read('eam-drawer') !== 'closed', false);
-handle.addEventListener('click', () => setDrawer(drawer.classList.contains('closed'), true));
+handle.addEventListener('click', () => {
+  if (side.matches) { sideOpen = !sideOpen; store('eam-side', sideOpen ? 'open' : 'folded'); }
+  else { drawerOpen = !drawerOpen; store('eam-drawer', drawerOpen ? 'open' : 'closed'); }
+  showOptions();
+});
+side.addEventListener('change', showOptions);
+showOptions();
+
+// ---------- full screen 3D view (hidden where the browser can't do it, e.g. iPhone) ----------
+const viewEl = $('view') as HTMLElement & { webkitRequestFullscreen?: () => void };
+const fsDoc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void; webkitFullscreenEnabled?: boolean };
+const fsBtn = $('fsBtn');
+fsBtn.hidden = !(document.fullscreenEnabled || fsDoc.webkitFullscreenEnabled);
+fsBtn.addEventListener('click', () => {
+  if (document.fullscreenElement || fsDoc.webkitFullscreenElement) {
+    if (document.exitFullscreen) document.exitFullscreen(); else fsDoc.webkitExitFullscreen?.();
+  } else if (viewEl.requestFullscreen) viewEl.requestFullscreen();
+  else viewEl.webkitRequestFullscreen?.();
+});
+function showFullscreen() {
+  const on = !!(document.fullscreenElement || fsDoc.webkitFullscreenElement);
+  fsBtn.classList.toggle('on', on);
+  fsBtn.title = on ? 'Leave full screen' : 'Full screen';
+  fsBtn.setAttribute('aria-label', fsBtn.title);
+  placeLegend();
+}
+document.addEventListener('fullscreenchange', showFullscreen);
+document.addEventListener('webkitfullscreenchange', showFullscreen);
 
 // ---------- number boxes and units ----------
 const FT = 3.28084;
@@ -86,15 +123,11 @@ function paintAll() {
   document.querySelectorAll<HTMLElement>('.nbox').forEach(paint);
   document.querySelectorAll<HTMLButtonElement>('#units button').forEach(b => b.classList.toggle('on', b.dataset.u === units));
   const band = bandFor(val('freqBox'));
-  // e.g. "128 ft Dipole @ 32.81 ft - 10 m - 28.4 MHz"
+  // e.g. "10 m Dipole @ 32.81 ft - 28.4 MHz" (no band when the frequency is outside them)
   const vertical = antenna() === 'gp' || antenna() === 'gpa';
-  const len = shown($(vertical ? 'gpVertBox' : 'lenBox'));
   const hv = shown($(vertical ? 'gpBaseBox' : 'heightBox'));
-  $('legendWhat').textContent = [
-    `${len.text} ${len.unit} ${ANTENNA_NAMES[antenna()]} @ ${hv.text} ${hv.unit}`,
-    ...(band ? [band.label] : []),
-    `${trim(val('freqBox'), 4)} MHz`,
-  ].join(' - ');
+  $('legendWhat').textContent =
+    `${band ? band.label + ' ' : ''}${ANTENNA_NAMES[antenna()]} @ ${hv.text} ${hv.unit} - ${trim(val('freqBox'), 4)} MHz`;
   document.querySelectorAll<HTMLButtonElement>('#bands button').forEach(b => b.classList.toggle('on', !!band && b.dataset.band === band.key));
 }
 
@@ -189,6 +222,7 @@ $('antenna').addEventListener('change', () => {
   setups[current] = capture();
   current = antenna();
   resetView = true;
+  swapping = true;
   apply(setups[current] ?? defaults(current));
   showAntennaBoxes();
   paintAll();
@@ -201,6 +235,9 @@ const view3d = createScene();
 watchSize($('chart') as unknown as SVGSVGElement);
 let pending = 0, runNo = 0;
 let resetView = true;
+// after switching antenna type, the old antenna and pattern stay up until the new results
+// are ready, then the antenna, view and pattern change together
+let swapping = false;
 let last: NecResult | null = null;
 
 function changed() {
@@ -230,17 +267,16 @@ async function calculate() {
   const sweep = sweepFor(freq);
   const ground = ($('ground') as HTMLSelectElement).value as GroundKey;
   const settings = settingsNow();
-  // always draw the antenna; if it can't be built, say why and keep the last results
+  // always draw the antenna (straight away, or with the results after a switch);
+  // if it can't be built, say why and keep the last results
   const geo = geometry(settings);
   // after opening the page or switching antenna, show that antenna's default view:
   // verticals from half the radiator's height, wire antennas level with the feed point
-  let eye: number | null = null;
-  if (resetView) {
-    eye = settings.antenna === 'gp' || settings.antenna === 'gpa' ? settings.gpBaseM + settings.gpVertM / 2 : geo.feedPoint[2];
-    resetView = false;
-  }
-  view3d.setAntenna(geo, settings.wireDiaMm, eye);
+  const eye = !resetView ? null
+    : settings.antenna === 'gp' || settings.antenna === 'gpa' ? settings.gpBaseM + settings.gpVertM / 2 : geo.feedPoint[2];
   const why = problem(settings);
+  const drawAntenna = () => { view3d.setAntenna(geo, settings.wireDiaMm, eye); resetView = swapping = false; };
+  if (!swapping || why) drawAntenna();
   const busy = $('busy'), warn = $('viewWarn');
   warn.hidden = !why;
   warn.textContent = why ?? '';
@@ -262,9 +298,11 @@ async function calculate() {
     if (result.points.length < 2 || !result.pattern) throw new Error('no results');
     last = result;
     showResults();
+    if (swapping) drawAntenna();
     view3d.setPattern(result.pattern);
   } catch (err) {
     if (my !== runNo) return;
+    if (swapping) drawAntenna();
     $('rVerdict').textContent = 'Engine error';
     $('rVerdict').className = 'verdict bad';
     console.error(err);
@@ -379,11 +417,11 @@ document.addEventListener('click', e => {
 });
 
 // legend: on wider screens the name goes top-left and the colour scale bottom-right
-// of the 3D view; on phones both sit together in a strip under it
+// of the 3D view (also when the view is full screen); on phones both sit together in a strip under it
 const legend = document.querySelector<HTMLElement>('.legend')!;
 const wide = matchMedia('(min-width: 761px)');
 function placeLegend() {
-  if (wide.matches) $('view').append($('legendWhat'), $('legendScale'));
+  if (wide.matches || document.fullscreenElement || fsDoc.webkitFullscreenElement) $('view').append($('legendWhat'), $('legendScale'));
   else { legend.append($('legendWhat'), $('legendScale')); $('view').after(legend); }
 }
 wide.addEventListener('change', placeLegend);

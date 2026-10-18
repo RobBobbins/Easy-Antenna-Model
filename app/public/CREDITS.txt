@@ -1,6 +1,8 @@
 Easy Antenna Model - credits and licences
 ==========================================
 
+By VA3OSO
+
 Easy Antenna Model is free software under the GNU General Public License,
 version 3 or later. See LICENSE in the source code.
 

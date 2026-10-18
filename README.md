@@ -1,5 +1,7 @@
 # Easy Antenna Model
 
+By VA3OSO
+
 A simple antenna modeler that runs in the browser. Pick an antenna, set its size and height,
 and see its SWR, gain and 3D radiation pattern.
 

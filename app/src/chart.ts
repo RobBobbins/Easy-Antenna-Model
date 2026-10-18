@@ -53,7 +53,9 @@ function render(svg: SVGSVGElement) {
   for (let f = Math.ceil(lo / step - 1e-9) * step; f <= hi + 1e-9; f += step) {
     const x = X(f);
     line(x, T, x, T + ph, 'grid');
-    text(x, T + ph + 14, f.toFixed(dec), 'tick');
+    // a label too close to the right edge to centre ends at its gridline instead
+    const label = f.toFixed(dec);
+    text(x, T + ph + 14, label, 'tick', x + label.length * 3.4 > W ? 'end' : 'middle');
   }
   text(L + pw, T + ph + 27, 'MHz', 'axis', 'end');
   out.push(`<rect class="frame" x="${L}" y="${T}" width="${pw}" height="${ph}"/>`);

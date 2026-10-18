@@ -8,6 +8,9 @@
 <body>
 <header>
   <h1>Easy Antenna Model</h1>
+  <button class="infobtn" id="aboutBtn" title="About and credits" aria-label="About and credits">
+    <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.6"/><circle class="dot" cx="10" cy="6.1" r="1.15"/><path d="M10 9v5.6"/></svg>
+  </button>
   <span class="spacer"></span>
   <div class="seg" id="units">
     <button data-u="ft" class="on">ft</button>
@@ -31,6 +34,7 @@
         <button data-view="iso">3D</button>
       </div>
       <div class="seg"><button id="orbitBtn" class="on">Orbit: On</button></div>
+      <span class="tbreak"></span>
       <select id="patStyle" class="patstyle" aria-label="Pattern style">
         <option value="default">Pattern: Default</option><option value="solid">Pattern: Solid</option><option value="wireframe">Pattern: Wireframe</option><option value="slices">Pattern: Slices</option><option value="dots">Pattern: Dots</option><option value="mirror">Pattern: Mirror</option>
       </select>
@@ -49,6 +53,9 @@
           <label class="custom lines"><input type="checkbox" id="constLines">Constellation lines</label>
         </div>
       </div>
+      <button id="fsBtn" class="fsbtn" title="Full screen" aria-label="Full screen">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path class="in" d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/><path class="out" d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4"/></svg>
+      </button>
     </div>
     <div class="viewwarn" id="viewWarn" hidden></div>
     <div class="nogl" id="nogl" hidden>The 3D view could not start in this browser.</div>
@@ -85,7 +92,7 @@
 </main>
 
 <section class="drawer" id="drawer">
-<button class="handle" id="drawerHandle" aria-expanded="true">Options <span id="drawerArrow">▼</span></button>
+<div class="barwrap">
 <div class="bar">
   <div class="opt w-ant">
     <select id="antenna" aria-label="Antenna"><option value="dipole">Dipole</option><option value="invv">Inverted V</option><option value="efhw">EFHW</option><option value="gp">Ground plane vertical</option><option value="gpa">Ground plane array (3 el)</option></select>
@@ -203,7 +210,54 @@
     <small data-label="Grid square">Grid square</small>
   </div>
 </div>
+</div>
+<button class="handle" id="drawerHandle" aria-expanded="true"><span class="hlabel">Options</span> <span id="drawerArrow">▼</span></button>
 </section>
+
+<dialog class="about" id="about" aria-labelledby="aboutTitle">
+  <div class="aboutin">
+    <h2 id="aboutTitle">Easy Antenna Model</h2>
+    <p class="byline">By VA3OSO</p>
+
+    <h3>Credits</h3>
+    <ul class="credits">
+      <li>
+        <span class="what">Antenna engine</span>
+        <b>nec2c</b>, the NEC-2 antenna code translated to C by Neoklis Kyriazis (5B4AZ),
+        maintained by KJ7LNW. Compiled for the browser from the unmodified source.
+        <span class="meta"><span class="lic">GNU General Public License v3</span>
+        <a href="https://github.com/KJ7LNW/nec2c" target="_blank" rel="noopener">github.com/KJ7LNW/nec2c</a></span>
+      </li>
+      <li>
+        <span class="what">Stars</span>
+        <b>Yale Bright Star Catalogue</b>, 5th revised edition (BSC5P), from NASA HEASARC:
+        star positions, brightness and colours.
+        <span class="meta"><span class="lic">Public domain</span>
+        <a href="https://heasarc.gsfc.nasa.gov/W3Browse/star-catalog/bsc5p.html" target="_blank" rel="noopener">heasarc.gsfc.nasa.gov</a></span>
+      </li>
+      <li>
+        <span class="what">Constellation lines</span>
+        <b>d3-celestial</b> by Olaf Frohn. Copyright © 2015 Olaf Frohn.
+        <span class="meta"><span class="lic">BSD 3-Clause licence</span>
+        <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noopener">github.com/ofrohn/d3-celestial</a></span>
+      </li>
+      <li>
+        <span class="what">3D graphics</span>
+        <b>three.js</b>
+        <span class="meta"><span class="lic">MIT licence</span>
+        <a href="https://threejs.org" target="_blank" rel="noopener">threejs.org</a></span>
+      </li>
+    </ul>
+
+    <h3>Licence</h3>
+    <p class="licence">
+      Easy Antenna Model is free software under the GNU General Public License, version 3 or later.
+      <a href="https://github.com/RobBobbins/Easy-Antenna-Model" target="_blank" rel="noopener">Source code</a>
+    </p>
+
+    <div class="aboutfoot"><button id="aboutClose">Close</button></div>
+  </div>
+</dialog>
 
 <script type="module" src="/src/main.ts"></script>
 </body>
