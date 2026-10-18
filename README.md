@@ -36,6 +36,16 @@ git submodule update --init
 
 ## Licence and credits
 
-GNU General Public License, version 3 or later (`app/LICENSE`).
-Credits for nec2c, the Yale Bright Star Catalogue, d3-celestial constellation lines and
-three.js are in `app/public/CREDITS.txt`.
+Easy Antenna Model is free software under the GNU General Public License, version 3 or later
+(`app/LICENSE`).
+
+- **Antenna engine:** nec2c, the NEC-2 antenna code translated to C by Neoklis Kyriazis (5B4AZ)
+  and maintained by KJ7LNW. https://github.com/KJ7LNW/nec2c. GPL v3. Compiled for the browser
+  from the unmodified source.
+- **Star positions, brightness and colours:** Yale Bright Star Catalogue, 5th revised edition
+  (BSC5P), from NASA HEASARC. https://heasarc.gsfc.nasa.gov/W3Browse/star-catalog/bsc5p.html.
+  Public domain.
+- **Constellation lines:** d3-celestial by Olaf Frohn. https://github.com/ofrohn/d3-celestial.
+  Copyright (c) 2015 Olaf Frohn, BSD 3-Clause licence (full text in
+  `app/public/sky/CONSTELLATIONS-LICENSE.txt`).
+- **3D graphics:** three.js, MIT licence. https://threejs.org
